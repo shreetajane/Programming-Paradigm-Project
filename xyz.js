@@ -3,6 +3,8 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged, signOut, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getDatabase, ref, set, push, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
+console.log("🚀 L&F Portal Script Loading...");
+
 // 2. Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAGpEqvw8-1RXrE8azXcpDsNOByMr6O11I",
@@ -128,7 +130,16 @@ window.markClaimed = async (id) => {
     const cName = prompt("Enter Claimer's Name:");
     const cEmail = prompt("Enter Claimer's Email:");
     if(!cName || !cEmail) return;
-    await update(ref(database, `lostItems/${id}`), { isClaimed: true, claimerName: cName, claimerEmail: cEmail });
+
+    // Updates the database status
+    await update(ref(database, `lostItems/${id}`), { 
+        isClaimed: true, 
+        claimerName: cName, 
+        claimerEmail: cEmail 
+    });
+    
+    alert("Item marked as resolved!");
+    // I removed the window.open line that was sending the email to the claimer!
 };
 
 window.deleteMe = (id) => confirm("Remove this entry permanently?") && remove(ref(database, `lostItems/${id}`));
@@ -156,12 +167,18 @@ window.fetchLostItems = (searchTerm = '') => {
             card.className = `glass-panel rounded-[2.5rem] overflow-hidden flex flex-col group transition-all duration-300 ${item.isClaimed ? 'opacity-30 grayscale' : 'hover:shadow-2xl hover:-translate-y-1'}`;
             
             const imgPath = item.imageUrl || 'https://images.unsplash.com/photo-1590247813693-5541d1c609fd?q=80&w=500&auto=format&fit=crop';
-            let actionHtml = isOwner 
-                ? (item.isClaimed ? `<div class="p-4 bg-emerald-500/10 text-emerald-400 text-[10px] rounded-xl font-bold mt-4">Resolved to: ${item.claimerName}</div>` 
-                                  : `<div class="flex gap-2 mt-4"><button onclick="markClaimed('${item.id}')" class="flex-1 bg-white text-slate-900 py-3 rounded-xl text-[10px] font-black uppercase">Mark Claimed</button><button onclick="deleteMe('${item.id}')" class="bg-red-500/10 text-red-400 px-4 rounded-xl">🗑️</button></div>`)
-                : (item.isClaimed ? `<div class="p-4 bg-white/5 text-slate-500 text-[10px] rounded-xl text-center mt-4">Handed Over</div>`
-                                  : `<a href="mailto:${item.reporterEmail}?subject=Found Item: ${item.name}" class="mt-4 block text-center text-indigo-400 font-black text-[10px] uppercase">Contact Owner →</a>`);
-
+          // This is the correct logic for the Registry
+let actionHtml = isOwner 
+    ? (item.isClaimed 
+        ? `<div class="p-4 bg-emerald-500/10 text-emerald-400 text-[10px] rounded-xl font-bold mt-4">Resolved to: ${item.claimerName}</div>` 
+        : `<div class="flex gap-2 mt-4"><button onclick="markClaimed('${item.id}')" class="flex-1 bg-white text-slate-900 py-3 rounded-xl text-[10px] font-black uppercase">Mark Claimed</button><button onclick="deleteMe('${item.id}')" class="bg-red-500/10 text-red-400 px-4 rounded-xl">🗑️</button></div>`)
+    : (item.isClaimed 
+        ? `<div class="p-4 bg-white/5 text-slate-500 text-[10px] rounded-xl text-center mt-4">Handed Over</div>`
+        : `<a href="https://mail.google.com/mail/?view=cm&fs=1&to=${item.reporterEmail}&su=Claim Inquiry: ${item.name}" 
+              target="_blank" 
+              class="mt-4 block text-center text-indigo-400 font-black text-[10px] uppercase">
+              Contact Founder →
+           </a>`);
             card.innerHTML = `
                 <div class="h-52 overflow-hidden bg-slate-900 relative">
                     <img src="${imgPath}" class="w-full h-full object-cover">
